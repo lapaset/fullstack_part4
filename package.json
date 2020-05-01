@@ -4,9 +4,9 @@
   "description": "Coursework for [Fullstack open](https://fullstackopen.com/en/part4) by University of Helsinki that _will_ include - Structure of backend application, introduction to testing - Testing the backend - User administration - Token authentication",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "cross-env NODE_ENV=production node index.js",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "test": "cross-env NODE_ENV=test jest --verbose --runInBand"
   },
   "repository": {
     "type": "git",
@@ -20,12 +20,19 @@
   "homepage": "https://github.com/lapaset/fullstack_part4#readme",
   "devDependencies": {
     "eslint": "^6.8.0",
-    "nodemon": "^2.0.3"
+    "jest": "^25.4.0",
+    "nodemon": "^2.0.3",
+    "supertest": "^4.0.2"
   },
   "dependencies": {
-    "dotenv": "^8.2.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.2",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-async-errors": "^3.1.1",
     "mongoose": "^5.9.10"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }
