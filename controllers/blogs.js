@@ -19,18 +19,9 @@ blogsRouter.get('/:id', async (req, res) => {
   res.json(blog)
 })
 
-const getTokenFrom = req => {
-  const authorization = req.get('authorization')
-  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
-    return authorization.substring(7)
-  }
-  return null
-}
-
 blogsRouter.post('/', async (req, res) => {
-  const token = getTokenFrom(req)
-  const decodedToken = jwt.verify(token, process.env.SECRET)
-  if (!token || !decodedToken.id) {
+  const decodedToken = jwt.verify(req.token, process.env.SECRET)
+  if (!req.token || !decodedToken.id) {
     return res.status(401).json({ error: 'token missing or invalid' })
   }
   const user = await User.findById(decodedToken.id)
