@@ -3,7 +3,14 @@ const bcrypt = require('bcrypt')
 const usersRouter = require('express').Router()
 
 usersRouter.get('/', async (req, res) => {
-  const users = await User.find({})
+  const users = await User
+    .find({})
+    .populate('blogs', {
+      url: 1,
+      title: 1,
+      author: 1,
+      id: 1
+    })
   res.json(users)
 })
 
@@ -16,12 +23,20 @@ usersRouter.post('/', async (req, res) => {
   const user = new User({
     username: req.body.username,
     name: req.body.name,
-    passwordHash: passwordHash
+    passwordHash
   })
 
   const savedUser = await user.save()
 
   res.status(201).json(savedUser)
+})
+
+usersRouter.delete('/:id', async (req, res) => {
+  const user = await User.findByIdAndDelete(req.params.id)
+  if (user)
+    res.status(204).end()
+  else
+    res.status(404).end()
 })
 
 module.exports = usersRouter
