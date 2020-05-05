@@ -1,4 +1,4 @@
-const listHelper = require('../utils/list_helpers')
+const listHelper = require('../utils/list_helper')
 
 const listOfOne = [
   {
@@ -39,7 +39,10 @@ const listOfThree = [
 ]
 
 test('dummy returns one', () => {
-  expect(listHelper.dummy()).toBe(1)
+  const blogs = []
+
+  const result = listHelper.dummy(blogs)
+  expect(result).toBe(1)
 })
 
 describe('total likes', () => {
@@ -63,28 +66,26 @@ describe('favorite blog', () => {
 
   test('of one to be the one', () => {
     expect(listHelper.favoriteBlog(listOfOne)).toEqual({
-      _id: '5ea2c504678e81cd24a8c5ee',
       title: 'muumin blogi',
       author: 'muumi',
-      url: 'muuminblogi.fi',
-      likes: 42,
-      __v: 0
+      likes: 42
     })
   })
 
   test('of many is the one with most likes', () => {
     expect(listHelper.favoriteBlog(listOfThree)).toEqual({
-      _id: '89743274a8c5ee',
       title: 'mymmelin blogi',
       author: 'mymmeli',
-      url: 'mymmelinblogi.fi',
-      likes: 7300,
-      __v: 0
+      likes: 7300
     })
   })
 })
 
-/*describe('most blogs', () => {
+describe('most blogs', () => {
+  test('of empty list is {}', () => {
+    expect(listHelper.mostBlogs([])).toEqual({})
+  })
+
   test('of one is the author', () => {
     expect(listHelper.mostBlogs(listOfOne)).toEqual({
       author: 'muumi',
@@ -98,4 +99,22 @@ describe('favorite blog', () => {
       blogs: 2
     })
   })
-})*/
+})
+
+describe('most likes', () => {
+  test('of empty list is {}', () => {
+    expect(listHelper.mostLikes([])).toEqual({})
+  })
+  test('of one is the author', () => {
+    expect(listHelper.mostLikes(listOfOne)).toEqual({
+      author: 'muumi',
+      likes: 42
+    })
+  })
+  test('of many to be the author with most likes', () => {
+    expect(listHelper.mostLikes(listOfThree)).toEqual({
+      author: 'mymmeli',
+      likes: 7300
+    })
+  })
+})
