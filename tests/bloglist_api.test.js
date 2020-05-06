@@ -9,22 +9,44 @@ const User = require('../models/user')
 const api = supertest(app)
 
 describe('blogs', () => {
+  let token
 
   beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('kille', 10)
+    const user = new User({
+      username: 'kalle',
+      passwordHash: passwordHash,
+    })
+    await user.save()
+
+    const loginUser = {
+      username: 'kalle',
+      password: 'kille'
+    }
+
+    const login = await api
+      .post('/api/login')
+      .send(loginUser)
+
+    token = login.body.token
 
     const noteObjects = helper.initialBlogs
-      .map(b => new Blog(b))
+      .map(b => new Blog({ ...b, user: user.id }))
     const promiseArray = noteObjects.map(b => b.save())
     await Promise.all(promiseArray)
   })
 
   describe('http get', () => {
     test('returns blog posts in JSON format', async () => {
-      await api
+      const result = await api
         .get('/api/blogs')
         .expect(200)
         .expect('Content-Type', /application\/json/)
+      console.log(result.body)
+      console.log('token', token)
     })
 
     test('returns the right amount of blogs', async () => {
@@ -49,11 +71,12 @@ describe('blogs', () => {
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set({ Authorization: `bearer ${token}` })
         .expect(201)
         .expect('Content-Type', /application\/json/)
 
-      const notesAtEnd = await helper.blogsInDb()
-      expect(notesAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
     })
 
     test('blog likes default to 0', async () => {
@@ -65,6 +88,7 @@ describe('blogs', () => {
       const result = await api
         .post('/api/blogs')
         .send(newBlog)
+        .set({ Authorization: `bearer ${token}` })
         .expect(201)
         .expect('Content-Type', /application\/json/)
 
@@ -79,10 +103,11 @@ describe('blogs', () => {
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set({ Authorization: `bearer ${token}` })
         .expect(400)
 
-      const notesAtEnd = await helper.blogsInDb()
-      expect(notesAtEnd).toHaveLength(helper.initialBlogs.length)
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
     })
 
     test('missing url status is 400 bad request and blog is not added', async () => {
@@ -93,20 +118,38 @@ describe('blogs', () => {
       await api
         .post('/api/blogs')
         .send(newBlog)
+        .set({ Authorization: `bearer ${token}` })
         .expect(400)
 
-      const notesAtEnd = await helper.blogsInDb()
-      expect(notesAtEnd).toHaveLength(helper.initialBlogs.length)
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+    })
+
+    test('missing token status is 401 and blog is not added', async () => {
+      const newBlog = {
+        title: 'uusi blogi',
+        author: 'muumi',
+        url: 'muuminblogi.fi',
+        likes: 42,
+      }
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(401)
+
+      const blogsAtEnd = await helper.blogsInDb()
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
     })
   })
 
   describe('http delete', () => {
-    test('succeeds with statuscode 204 with valid id', async () => {
+    test('succeeds with statuscode 204 with the token of the user that created the blog', async () => {
       const blogs = await helper.blogsInDb()
       const blogToRemove = blogs[0]
 
       await api
         .delete(`/api/blogs/${blogToRemove.id}`)
+        .set({ Authorization: `bearer ${token}` })
         .expect(204)
 
       const blogsAfter = await helper.blogsInDb()
